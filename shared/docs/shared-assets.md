@@ -19,11 +19,6 @@
 - `shared/templates/`
 - `shared/docs/`
 
-当前仓库已同步：
-
-- 规范文档：`shared/docs/*.md`
-- 模板：`shared/templates/*.md`
-
 ## 3) 多 Agent 复用方式
 
 如果每个 Agent 有独立 workspace：
@@ -37,14 +32,7 @@
 shared/scripts/link-shared-into-agent.sh /path/to/agent/workspace
 ```
 
-## 4) 引用策略（建议）
-
-- 对外输出（给 wik 的交付物/规范）：优先引用仓库根目录的 `docs/`、`templates/`（阅读路径更直观）。
-- 对内复用（多 Agent/多 workspace）：优先从 `shared/` 读取同名文档/模板。
-
-> 约定：`shared/` 与根目录的 `docs/`、`templates/` 保持内容一致（shared 为“共享层镜像”）。
-
-## 5) 变更策略
+## 4) 变更策略
 
 - shared/ 里的东西必须可复用、可验证。
 - 任何修改都要配最小验证方式（命令/用例），并用中文 commit。
