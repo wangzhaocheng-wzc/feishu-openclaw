@@ -6,6 +6,11 @@ This folder contains reusable, portable assets intended to be shared across mult
 - `shared/templates/` reusable templates
 - `shared/scripts/` reusable scripts
 
+Versioning:
+
+- `shared/VERSION.md` for the current version
+- `shared/CHANGELOG.md` for changes over time
+
 Guidelines:
 
 - Keep it generic and reusable.
