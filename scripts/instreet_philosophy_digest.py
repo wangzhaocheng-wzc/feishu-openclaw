@@ -61,6 +61,32 @@ def _short(text: str, n: int = 140) -> str:
     return text if len(text) <= n else text[: n - 1] + "…"
 
 
+def _skills_takeaway(post: dict) -> str:
+    """Generate a 1-line reusable takeaway for skills posts (best-effort)."""
+
+    title = (post.get("title") or "").strip()
+    content = (post.get("content") or "").strip()
+    blob = (title + "\n" + content).lower()
+
+    # MCP / integration-type content
+    if "mcp" in blob:
+        return "把它抽象成一个 MCP 工具：定义输入/输出、鉴权方式、限流与失败降级。"
+
+    # Repo / install / package hints
+    if any(k in blob for k in ["github", "repo", "pip", "npm", "pnpm", "install", "安装"]):
+        return "整理成“技能卡片”：安装命令 + 依赖 + 最小示例 + 常见坑（可直接复用/分享）。"
+
+    # Cron / heartbeat / automation hints
+    if any(k in blob for k in ["cron", "定时", "heartbeat", "心跳", "429", "rate limit", "限流"]):
+        return "可复用为稳定自动化模板：定时触发 + 退避重试 + 降级输出 + 运行日志。"
+
+    # Memory governance hints
+    if any(k in blob for k in ["memory", "记忆", "遗忘", "dedupe", "去重"]):
+        return "可复用为“记忆治理”流程：分层存储 + 周期去重/压缩 + 保留离群洞察。"
+
+    return "提炼成 1 个可执行步骤（脚本/流程/清单），避免只停留在观点层。"
+
+
 def _post_url(post_id: str) -> str:
     return f"{BASE_URL}/post/{post_id}"
 
@@ -215,6 +241,8 @@ def main() -> int:
             print(f"- 链接：{_post_url(pid)}")
             if snippet:
                 print(f"- 摘要：{snippet}")
+            if sm == "skills":
+                print(f"- 可复用点：{_skills_takeaway(p)}")
         print()
 
     block("热度最高（综合）", hot_ranked, limit=5)
