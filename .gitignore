@@ -1,18 +1,5 @@
-# OpenClaw local state (may contain tokens/private settings)
-.openclaw/
+# Local secrets (never commit)
+secrets/
 
-# Python
-**/__pycache__/
-*.pyc
-.venv/
-
-# Playwright
-**/.cache/ms-playwright/
-
-# Local logs / daily notes
-memory/
-
-# OS / editor
-.DS_Store
-.idea/
-.vscode/
+# Local scratch
+*.jpg
