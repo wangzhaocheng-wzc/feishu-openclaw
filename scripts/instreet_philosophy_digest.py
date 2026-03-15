@@ -74,12 +74,68 @@ def _fmt_dt(ts: str) -> str:
         return ts
 
 
+def _post_submolt_name(post: dict) -> str:
+    sm = post.get("submolt") or {}
+    if isinstance(sm, dict):
+        return (sm.get("name") or "").strip()
+    # Some endpoints may return a string.
+    if isinstance(sm, str):
+        return sm.strip()
+    return ""
+
+
 def _score(post: dict) -> float:
     # Heuristic: prioritize upvotes & discussion, fall back to hot_score.
     up = post.get("upvotes") or 0
     cm = post.get("comment_count") or 0
     hot = post.get("hot_score") or 0
     return float(up) * 2.0 + float(cm) * 0.8 + float(hot) * 0.05
+
+
+def _skills_keep(post: dict) -> bool:
+    """Filter out low-signal skills posts (help/water/testing).
+
+    InStreet API doesn't expose bookmarks/favorites, so we bias toward posts that
+    look like actionable skills (install/config/demo/repo/mcp) and drop obvious
+    low-signal chatter.
+    """
+
+    title = (post.get("title") or "").strip()
+    content = (post.get("content") or "").strip()
+    blob = (title + "\n" + content).lower()
+
+    # Exclude common low-signal patterns.
+    exclude = [
+        "求助",
+        "help",
+        "测试",
+        "test",
+        "报到",
+        "新人",
+        "开组",
+    ]
+    for k in exclude:
+        if k in blob:
+            return False
+
+    # Include if it looks actionable.
+    include = [
+        "github",
+        "repo",
+        "pip",
+        "npm",
+        "pnpm",
+        "install",
+        "安装",
+        "配置",
+        "示例",
+        "用法",
+        "教程",
+        "mcp",
+        "curl",
+        "api",
+    ]
+    return any(k in blob for k in include)
 
 
 def main() -> int:
@@ -103,16 +159,28 @@ def main() -> int:
         newest_posts.extend(((newest.get("data", {}) or {}).get("data", []) or []))
         hot_posts.extend(((hot.get("data", {}) or {}).get("data", []) or []))
 
+    # Apply board-specific filtering.
+    filtered_newest = []
+    filtered_hot = []
+    for p in newest_posts:
+        if _post_submolt_name(p) == "skills" and not _skills_keep(p):
+            continue
+        filtered_newest.append(p)
+    for p in hot_posts:
+        if _post_submolt_name(p) == "skills" and not _skills_keep(p):
+            continue
+        filtered_hot.append(p)
+
     # Build maps for easy merge.
     by_id = {}
-    for p in newest_posts + hot_posts:
+    for p in filtered_newest + filtered_hot:
         pid = p.get("id")
         if pid:
             by_id[pid] = p
 
     # Rank for different slices.
-    hot_ranked = sorted(hot_posts, key=_score, reverse=True)
-    newest_ranked = sorted(newest_posts, key=lambda p: p.get("created_at") or "", reverse=True)
+    hot_ranked = sorted(filtered_hot, key=_score, reverse=True)
+    newest_ranked = sorted(filtered_newest, key=lambda p: p.get("created_at") or "", reverse=True)
     discussed = sorted(by_id.values(), key=lambda p: (p.get("comment_count") or 0, _score(p)), reverse=True)
 
     now = _dt.datetime.now(_dt.timezone(_dt.timedelta(hours=8)))
@@ -138,8 +206,12 @@ def main() -> int:
             cm = p.get("comment_count") or 0
             created = _fmt_dt(p.get("created_at", ""))
             snippet = _short(p.get("content", ""), 120)
+            sm = _post_submolt_name(p)
             print(f"{i}. {t}")
-            print(f"- 作者：{author}｜👍 {up}｜💬 {cm}｜时间：{created}")
+            if len(SUBMOLTS) > 1:
+                print(f"- 板块：{sm}｜作者：{author}｜👍 {up}｜💬 {cm}｜时间：{created}")
+            else:
+                print(f"- 作者：{author}｜👍 {up}｜💬 {cm}｜时间：{created}")
             print(f"- 链接：{_post_url(pid)}")
             if snippet:
                 print(f"- 摘要：{snippet}")
