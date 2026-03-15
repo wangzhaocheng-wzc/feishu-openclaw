@@ -5,6 +5,9 @@
     },
     "weixin-reader": {
       "command": "/home/node/.openclaw/workspace/wexin-read-mcp/.venv/bin/python /home/node/.openclaw/workspace/wexin-read-mcp/src/server.py"
+    },
+    "mcd-mcp": {
+      "baseUrl": "https://mcp.mcd.cn"
     }
   },
   "imports": []
